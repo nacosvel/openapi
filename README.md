@@ -38,6 +38,58 @@ composer require nacosvel/openapi
 
 ## Usage
 
+### Builder Initialization
+
+```php
+use Nacosvel\OpenAPI\Builder;
+
+$instance = Builder::factory([
+    'mchid' => '190000****',
+], [
+    'base_uri' => 'https://httpspot.dev/',
+]);
+```
+
+### Middleware Registration
+
+```php
+use Nacosvel\OpenAPI\Middleware\Middleware;
+
+$instance->addMiddleware([
+    new Middleware($builder->getClientDecorator()->getConfig()),
+]);
+```
+
+### Synchronous Request
+
+```php
+$response = $builder->chain('anything/{code}')->get([
+    'query' => [
+        'id' => 1,
+    ],
+    'code'  => rand(100000, 999999),
+]);
+
+var_dump($response->getBody()->getContents());
+```
+
+### Asynchronous Requests
+
+```php
+use Psr\Http\Message\ResponseInterface;
+
+$response = $builder->anything->_code_->getAsync([
+    'query' => [
+        'id' => 1,
+    ],
+    'code'  => rand(100000, 999999),
+])->then(function (ResponseInterface $response) {
+    return $response->getBody()->getContents();
+})->wait();
+
+var_dump($response);
+```
+
 <!-- CONTRIBUTING -->
 
 ## Contributing

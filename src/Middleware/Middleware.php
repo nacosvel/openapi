@@ -9,6 +9,12 @@ use Psr\Http\Message\ResponseInterface;
 
 class Middleware implements MiddlewareInterface
 {
+    public function __construct(
+        protected array $config = [],
+    ) {
+        //
+    }
+
     public function handle(RequestInterface $request, callable $next): PromiseInterface
     {
         return $next($request)->then(function (ResponseInterface $response) {
