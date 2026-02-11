@@ -46,6 +46,6 @@ class Pipeline
 
         $response = $handler($request, $options);
 
-        return $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
+        return $response instanceof PromiseInterface ? $response : Create::promiseFor($response);
     }
 }

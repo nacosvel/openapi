@@ -19,7 +19,7 @@ class Middleware implements MiddlewareInterface
     public function handle(RequestInterface $request, array $options, callable $next): PromiseInterface|ResponseInterface
     {
         $response = $next($request, $options);
-        $response = $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
+        $response = $response instanceof PromiseInterface ? $response : Create::promiseFor($response);
         return $response->then(fn(ResponseInterface $response) => $response);
     }
 
