@@ -2,6 +2,7 @@
 
 namespace Nacosvel\OpenAPI\Middleware;
 
+use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface;
 use Nacosvel\OpenAPI\Contracts\MiddlewareInterface;
 use Psr\Http\Message\RequestInterface;
@@ -15,11 +16,11 @@ class Middleware implements MiddlewareInterface
         //
     }
 
-    public function handle(RequestInterface $request, callable $next): PromiseInterface
+    public function handle(RequestInterface $request, array $options, callable $next): PromiseInterface|ResponseInterface
     {
-        return $next($request)->then(function (ResponseInterface $response) {
-            return $response;
-        });
+        $response = $next($request, $options);
+        $response = $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
+        return $response->then(fn(ResponseInterface $response) => $response);
     }
 
     public function prepare(string $uri, array $options = []): bool

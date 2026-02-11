@@ -12,10 +12,9 @@ use Psr\Http\Message\ResponseInterface;
 class Pipeline
 {
     public function __construct(
-        protected Closure $passable,
         protected array $middlewares = [],
     ) {
-        $this->passable = Closure::fromCallable($passable);
+        //
     }
 
     /**
@@ -23,7 +22,7 @@ class Pipeline
      *
      * @return static
      */
-    public function addMiddleware(MiddlewareInterface $middleware): static
+    public function pipe(MiddlewareInterface $middleware): static
     {
         $this->middlewares[] = $middleware;
 
@@ -32,27 +31,20 @@ class Pipeline
 
     /**
      * @param RequestInterface $request
+     * @param array            $options
+     * @param callable         $passable
      *
      * @return PromiseInterface
      */
-    public function handle(RequestInterface $request): PromiseInterface
+    public function handle(RequestInterface $request, array $options, callable $passable): PromiseInterface
     {
-        $passable = function ($passable) {
-            return function (RequestInterface $request) use ($passable): PromiseInterface {
-                $response = $passable($request);
+        $handler = array_reduce(array_reverse($this->middlewares), function ($next, MiddlewareInterface $middleware): Closure {
+            return function ($request, $options) use ($next, $middleware): PromiseInterface {
+                $response = $middleware->handle($request, $options, $next);
                 return $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
             };
-        };
+        }, $passable instanceof ResponseInterface ? Create::promiseFor($passable) : $passable);
 
-        $next = $passable($this->passable);
-
-        foreach (array_reverse($this->middlewares) as $middleware) {
-            $next = function (RequestInterface $request) use ($middleware, $next): PromiseInterface {
-                $response = call_user_func([$middleware, 'handle'], $request, $next);
-                return $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
-            };
-        }
-
-        return $next($request);
+        return $handler($request, $options);
     }
 }

@@ -97,11 +97,12 @@ class ClientDecorator implements Contracts\ClientDecorator
      */
     public function request(string $method, string $uri = '', array $options = []): ResponseInterface
     {
-        $handler = new Pipeline(function (RequestInterface $request) use ($options) {
-            return $this->getClient()->send($request, $options);
-        }, $this->getMiddlewares());
+        $handler = new Pipeline($this->getMiddlewares());
+        $request = new Request($method, UriTemplate::expand($uri, $options));
 
-        return $handler->handle(new Request($method, UriTemplate::expand($uri, $options)))->wait();
+        return $handler->handle($request, $options, function (RequestInterface $request, array $options) {
+            return $this->getClient()->send($request, $options);
+        })->wait();
     }
 
     /**
@@ -120,10 +121,11 @@ class ClientDecorator implements Contracts\ClientDecorator
      */
     public function requestAsync(string $method, string $uri = '', array $options = []): PromiseInterface
     {
-        $handler = new Pipeline(function (RequestInterface $request) use ($options) {
-            return $this->getClient()->sendAsync($request, $options);
-        }, $this->getMiddlewares());
+        $handler = new Pipeline($this->getMiddlewares());
+        $request = new Request($method, UriTemplate::expand($uri, $options));
 
-        return $handler->handle(new Request($method, UriTemplate::expand($uri, $options)));
+        return $handler->handle($request, $options, function (RequestInterface $request, array $options) {
+            return $this->getClient()->sendAsync($request, $options);
+        });
     }
 }

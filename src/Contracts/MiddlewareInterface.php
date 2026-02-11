@@ -10,9 +10,10 @@ interface MiddlewareInterface
 {
     /**
      * @param RequestInterface $request
+     * @param array            $options
      * @param callable         $next
      *
-     * @return PromiseInterface<ResponseInterface>
+     * @return PromiseInterface|ResponseInterface
      */
-    public function handle(RequestInterface $request, callable $next): PromiseInterface;
+    public function handle(RequestInterface $request, array $options, callable $next): PromiseInterface|ResponseInterface;
 }
