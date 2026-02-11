@@ -39,12 +39,13 @@ class Pipeline
     public function handle(RequestInterface $request, array $options, callable $passable): PromiseInterface
     {
         $handler = array_reduce(array_reverse($this->middlewares), function ($next, MiddlewareInterface $middleware): Closure {
-            return function ($request, $options) use ($next, $middleware): PromiseInterface {
-                $response = $middleware->handle($request, $options, $next);
-                return $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
+            return function ($request, $options) use ($next, $middleware) {
+                return $middleware->handle($request, $options, $next);
             };
-        }, $passable instanceof ResponseInterface ? Create::promiseFor($passable) : $passable);
+        }, $passable);
 
-        return $handler($request, $options);
+        $response = $handler($request, $options);
+
+        return $response instanceof ResponseInterface ? Create::promiseFor($response) : $response;
     }
 }
